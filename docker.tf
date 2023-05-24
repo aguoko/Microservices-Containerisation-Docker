@@ -44,6 +44,7 @@ resource "aws_internet_gateway" "MYIGW" {
 resource "aws_subnet" "Public-Subnet1" {
   vpc_id     = aws_vpc.MyLondonVPC.id
   cidr_block = "10.0.0.0/24"
+  map_public_ip_on_launch = true
 
   tags = {
     Name = "Pub-Sub-1"
@@ -149,6 +150,7 @@ resource "aws_instance" "server_1" {
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   key_name               = "nlonKeyPairs"
   user_data            = "${file("docker-install.sh")}"
+  
 
   tags = {
     Name = "Docker-server"
