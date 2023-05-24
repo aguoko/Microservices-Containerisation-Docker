@@ -21,7 +21,7 @@ terraform {
 resource "aws_vpc" "MyLondonVPC" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
-  map_public_ip_on_launch = true
+  #map_public_ip_on_launch = true
   enable_dns_hostnames = true
   
 
@@ -40,7 +40,7 @@ resource "aws_internet_gateway" "MYIGW" {
 }
 
 
-#Create Subnet 1
+#Create Subnet
 resource "aws_subnet" "Public-Subnet1" {
   vpc_id     = aws_vpc.MyLondonVPC.id
   cidr_block = "10.0.0.0/24"
@@ -50,10 +50,26 @@ resource "aws_subnet" "Public-Subnet1" {
   }
 }
 
-# Create RT
-resource "aws_route_table_association" "rt" {
+# create RT
+resource "aws_route_table" "My-RT" {
+  vpc_id = aws_vpc.MyLondonVPC.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.MYIGW.id
+  }
+
+
+
+  tags = {
+    Name = "rt"
+  }
+}
+
+# RT association
+resource "aws_route_table_association" "RT-association" {
   subnet_id      = aws_subnet.Public-Subnet1.id
-  route_table_id = aws_route_table.my-rt.id
+  route_table_id = aws_route_table.My-RT.id
 }
 
 resource "aws_security_group" "ec2_security_group" {
@@ -129,7 +145,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "server_1" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
-  subnet_id              = aws_default_subnet.default_az1.id
+  subnet_id              = aws_subnet.Public-Subnet1.id
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   key_name               = "nlonKeyPairs"
   user_data            = "${file("docker-install.sh")}"
